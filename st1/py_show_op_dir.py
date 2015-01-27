@@ -14,8 +14,10 @@ from common import *
 import matplotlib.pyplot as plt
 
 THRESHOLD = 5 # 只有大于该值,才显示方向
+ROWS = 5
+COLS = 5
 
-ds0 = load_all() # 加载所有数据
+ds0 = load_all(ROWS * COLS) # 加载所有数据
 
 
 def op_element(d0):
@@ -31,8 +33,6 @@ def op_element(d0):
             lv[i] = 0.0
 
     angv = np.arctan2(xv, yv) # 计算每个点的偏角, 范围 [-pi .. pi]
-
-    print 'angv size:', angv.size
 
     # 八个方向,使用不同的值 ...
     M = 0.0  # 小于阈值者
@@ -51,8 +51,6 @@ def op_element(d0):
 
     colv = np.zeros(angv.size)
 
-    print 'colv size:', colv.size
-    
     for i in range(0, angv.size):
         if lv[i] < 0.000001: # 小于阈值
             continue
@@ -65,15 +63,25 @@ def op_element(d0):
     return colv.reshape(r, c)
 
 
-def show(cv):
+def show(cvs):
     fig = plt.figure(1)
-    plt.imshow(cv)
+    n = 0
+    for i in range(0, ROWS*COLS):
+        plt.subplot(ROWS, COLS, n+1)
+        plt.imshow(cvs[n])
+        n += 1
+
     plt.show()
 
 
 if __name__ == '__main__':
-    cv = op_element(ds0[8])
-    show(cv)
+    cvs = []
+    for i in range(0, ROWS*COLS):
+        cv = op_element(ds0[i])
+        print 'append sample:', i
+        cvs.append(cv)
+
+    show(cvs)
         
 
 

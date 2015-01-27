@@ -13,6 +13,9 @@ import matplotlib.pyplot as plt
 import math
 from common import *
 
+ROWS = 5
+COLS = 5
+
 def op_mod(e):
     ''' e 为 [dx, dy] 实例，计算每个点的 sqrt(dx*dx + dy*dy)
         返回 row * col 的矩阵，每个元素为 mod
@@ -29,9 +32,6 @@ def show(ds):
     ''' 显示到图表中'''
     fig = plt.figure(1)
 
-    ROWS = 3
-    COLS = 3
-
     n = 1
     for r in range(0, ROWS):
         for c in range(0, COLS):
@@ -45,7 +45,7 @@ def show(ds):
 
 
 if __name__ == '__main__':
-    ds0 = load_all()
+    ds0 = load_all(ROWS * COLS)
     ds = []
     for d in ds0:
         ds.append(op_mod(d))
