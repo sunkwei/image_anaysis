@@ -8,11 +8,10 @@
 #
 #################################################################
 
-from cv2 import *
 import numpy as np
 import matplotlib.pyplot as plt
 import math
-
+from common import *
 
 def op_mod(e):
     ''' e 为 [dx, dy] 实例，计算每个点的 sqrt(dx*dx + dy*dy)
@@ -25,25 +24,6 @@ def op_mod(e):
 
     ms = np.sqrt(x*x + y*y) # 
     return ms.reshape((r,c)) # 还原 e 的模样，但是每个元素为向量长度
-
-
-def load_from_yaml(fname):
-    ''' 从 fname 中加载光流描述文件 '''
-    e = cv.Load(fname)
-    return np.asarray(e) # 每个元素为 [dx, dy]，为光流矢量的x,y 分量
-
-
-def load_all():
-    ds = []
-    for i in range(0, 20):
-        e = load_from_yaml('data/%d.yaml' % i)
-        m = op_mod(e)
-        ds.append(m)
-
-    print 'load %d samples' % len(ds)
-
-    return ds
-
 
 def show(ds):
     ''' 显示到图表中'''
@@ -65,8 +45,11 @@ def show(ds):
 
 
 if __name__ == '__main__':
-    data = load_all()
-    show(data)
+    ds0 = load_all()
+    ds = []
+    for d in ds0:
+        ds.append(op_mod(d))
+    show(ds)
 
 
 
