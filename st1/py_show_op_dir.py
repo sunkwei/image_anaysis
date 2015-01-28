@@ -18,7 +18,7 @@ THRESHOLD = 3 # 只有大于该值,才显示方向
 ROWS = 5
 COLS = 5
 
-ds0 = load_all(ROWS * COLS) # 加载所有数据
+ds0 = load_all(ROWS * COLS, base=10) # 加载所有数据
 
 
 def op_element(d0):
@@ -33,25 +33,35 @@ def op_element(d0):
         if lv[i] < THRESHOLD:
             lv[i] = 0.0
 
-    angv = np.arctan2(xv, yv) # 计算每个点的偏角, 范围 [-pi .. pi]
+    angv = np.arctan2(yv, xv) # 计算每个点的偏角, 范围 [-pi .. pi]
     colv = np.zeros(angv.size)
+
+    LEFT = 4
+    RIGHT = 3
+    UP = 2
+    DOWN = 1
+
+    dirs = [ UP, LEFT, DOWN, RIGHT  ]
 
     for i in range(0, angv.size):
         if lv[i] < 0.000001: # 0
             continue
 
-        # 此处不考虑水平方向,
-        if angv[i] < 0:
-            colv[i] = 2.5 # up
-        else:
-            colv[i] = 1.5
+        ang = angv[i]
+        ang += math.pi # 取正值
+        ang += math.pi/4 # 旋转
+        ang %= math.pi*2
+
+        index = int(ang / (math.pi/2))
+
+        colv[i] = dirs[index]
 
     return colv.reshape(r, c)
 
 
 def show(cvs):
-    cmap2 = colors.ListedColormap(['black', 'blue', 'red']) # 向上 red, 向下 blue
-    bounds2 = [0, 1, 2, 3]
+    cmap2 = colors.ListedColormap(['black', 'blue', 'red', 'yellow', 'green']) # 向上 red, 向下 blue
+    bounds2 = [0, 0.5, 1.5, 2.5, 3.5, 5]
     norm2 = colors.BoundaryNorm(bounds2, cmap2.N)
 
     fig = plt.figure(1)

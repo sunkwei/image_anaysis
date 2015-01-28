@@ -17,9 +17,9 @@ def load_from_yaml(fname):
     return np.asarray(e) # 每个元素为 [dx, dy]，为光流矢量的x,y 分量
 
 
-def load_all(n):
+def load_all(n, base=0):
     ds = []
-    for i in range(0, n):
+    for i in range(base, n+base):
         e = load_from_yaml('data/%d.yaml' % i)
         ds.append(e)
 
