@@ -51,10 +51,15 @@ def show(ds):
 
 
 if __name__ == '__main__':
-    ds0 = load_all(ROWS * COLS)
+    ds0 = load_all(ROWS * COLS, base=10)
     ds = []
+    n = 0
     for d in ds0:
-        ds.append(op_mod(d))
+        print 'op_mod for ', n
+        m = op_mod(d)
+        np.save('tmp/np%d' % n, m)
+        n += 1
+        ds.append(m)
     show(ds)
 
 
