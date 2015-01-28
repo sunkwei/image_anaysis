@@ -12,8 +12,9 @@ import math
 import numpy as np
 from common import *
 import matplotlib.pyplot as plt
+from matplotlib import colors
 
-THRESHOLD = 5 # 只有大于该值,才显示方向
+THRESHOLD = 3 # 只有大于该值,才显示方向
 ROWS = 5
 COLS = 5
 
@@ -33,42 +34,31 @@ def op_element(d0):
             lv[i] = 0.0
 
     angv = np.arctan2(xv, yv) # 计算每个点的偏角, 范围 [-pi .. pi]
-
-    # 八个方向,使用不同的值 ...
-    M = 0.0  # 小于阈值者
-    SW = 1.0
-    S = SW + 0.125
-    SE = S + 0.125
-    E = SE + 0.125
-    NE = E + 0.125
-    N = NE + 0.125
-    NW = N + 0.125
-    W = NW + 0.125
-
-    dirs = [ W, SW, SW, S, S, SE, SE, E, E, NE, NE, N, N, NW, NW, W ]
-
-    BLACK = (0.0, 0.0, 0.0)
-
     colv = np.zeros(angv.size)
 
     for i in range(0, angv.size):
-        if lv[i] < 0.000001: # 小于阈值
+        if lv[i] < 0.000001: # 0
             continue
 
-        ang = angv[i]       # ang [-pi .. pi]
-        ang = ang + math.pi # 取值变为正
-        index = int(ang / (math.pi / 8))
-        colv[i] = dirs[index]
+        # 此处不考虑水平方向,
+        if angv[i] < 0:
+            colv[i] = 2.5 # up
+        else:
+            colv[i] = 1.5
 
     return colv.reshape(r, c)
 
 
 def show(cvs):
+    cmap2 = colors.ListedColormap(['black', 'blue', 'red']) # 向上 red, 向下 blue
+    bounds2 = [0, 1, 2, 3]
+    norm2 = colors.BoundaryNorm(bounds2, cmap2.N)
+
     fig = plt.figure(1)
     n = 0
     for i in range(0, ROWS*COLS):
         plt.subplot(ROWS, COLS, n+1)
-        plt.imshow(cvs[n])
+        plt.imshow(cvs[n], cmap=cmap2, norm=norm2)
         n += 1
 
     plt.show()

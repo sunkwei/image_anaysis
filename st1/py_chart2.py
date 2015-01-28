@@ -15,6 +15,7 @@ from common import *
 
 ROWS = 5
 COLS = 5
+THRESHOLD = 5 # 如果长度小于此,则大小置为0
 
 def op_mod(e):
     ''' e 为 [dx, dy] 实例，计算每个点的 sqrt(dx*dx + dy*dy)
@@ -26,6 +27,11 @@ def op_mod(e):
     y = le[1::2]           # 提取 y
 
     ms = np.sqrt(x*x + y*y) # 
+
+    for i in range(0, ms.size):
+        if ms[i] < THRESHOLD:
+            ms[i] = 0.0
+
     return ms.reshape((r,c)) # 还原 e 的模样，但是每个元素为向量长度
 
 def show(ds):
