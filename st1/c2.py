@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import math, cv2.cv as cv
 from matplotlib import colors
+import sys
 
 ROWS = 3 # 显示三帧
 COLS = 3 # 每帧显示光流大小,原始图像,光流方向
@@ -73,9 +74,9 @@ def op_element(d0):
     return colv.reshape(r, c)
 
 
-def show(ds, imgs, dds):
+def show(ds, imgs, dds, fs):
     ''' 显示到图表中'''
-    plt.figure(1)
+    fig = plt.figure()
     n = 0
     for i in range(0, ROWS):
         plt.subplot(ROWS, COLS, n*COLS+1) # 选择子图
@@ -98,7 +99,14 @@ def show(ds, imgs, dds):
         plt.imshow(dds[n], cmap=cmap2, norm=norm2)
         n += 1
 
-    plt.show()
+    fname = 'saved/f'
+    for i in fs:
+        fname += '-'
+        fname += str(i)
+    fname += '.jpg'
+    fig.savefig(fname) # 保存到文件, 更方便比较
+
+    #plt.show()
 
 
 def load_all(n, base=1440):
@@ -112,13 +120,16 @@ def load_all(n, base=1440):
     return ds, imgs
 
 
-if __name__ == '__main__':
+def do_once(base):
     ds = []
     dds = []
-    ds0, imgs0 = load_all(ROWS, 1496)
+    
+    fs = []
+    ds0, imgs0 = load_all(ROWS, base)
     n = 0
     for d in ds0:
-        print 'op_mod for ', n
+        print 'op_mod for ', base + n
+        fs.append(base + n)
         n += 1
 
         m = op_mod(d)
@@ -127,9 +138,15 @@ if __name__ == '__main__':
         dd = op_element(d)
         dds.append(dd)
 
-    show(ds, imgs0, dds)
+    show(ds, imgs0, dds, fs)
 
 
+if __name__ == '__main__':
+    ''' 保存到 saved/ 目录中,方便查看 '''
+    n = 1442
+    while n < 1498:
+        do_once(n)
+        n += 3
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
