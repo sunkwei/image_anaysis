@@ -16,7 +16,7 @@ SRCPATH = os.getenv('HOME') + '/Desktop/bin'
 DSTPATH = '../origin_data'
 PICPATH = os.getenv('HOME') + '/Desktop/main'
 
-for i in range(1440, 1499):
+for i in range(1000, 1502):
     sfname = SRCPATH + '/%d.yaml' % i
     dfname = DSTPATH + '/%d' % i
     pfname = DSTPATH + '/%d.jpg' % i

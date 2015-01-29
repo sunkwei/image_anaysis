@@ -14,6 +14,7 @@ import matplotlib.image as mpimg
 import math, cv2.cv as cv
 from matplotlib import colors
 import sys
+import threading
 
 ROWS = 3 # 显示三帧
 COLS = 3 # 每帧显示光流大小,原始图像,光流方向
@@ -143,11 +144,16 @@ def do_once(base):
 
 if __name__ == '__main__':
     ''' 保存到 saved/ 目录中,方便查看 '''
-    n = 1442
-    while n < 1498:
+    if len(sys.argv) != 3:
+        print 'ERR: using %s <start frame id> <count>' % argv[0]
+        sys.exit()
+
+    base = int(sys.argv[1])
+    cnt = int(sys.argv[2])
+    n = base
+    while n < base+cnt-1:
         do_once(n)
         n += 3
-
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 
