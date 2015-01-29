@@ -1,5 +1,7 @@
 #!/bin/bash
 
+mkdir -p saved
+
 # 并行计算, 共有501个样本
 
 python c2.py 1000 30 &
