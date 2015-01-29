@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import math, cv2.cv as cv
 
-ROWS = 5
-COLS = 5
+ROWS = 2
+COLS = 2
 THRESHOLD = 5 # 如果长度小于此,则大小置为0
 
 def op_mod(e):
@@ -37,21 +37,18 @@ def op_mod(e):
 def show(ds, imgs):
     ''' 显示到图表中'''
     plt.figure(1)
-    n = 1
-    for r in range(0, ROWS):
-        for c in range(0, COLS):
-            plt.subplot(ROWS, COLS, n) # 选择子图
-            plt.imshow(ds[n-1])        # 画图,plt自动使用cool-->warm的颜色显示值大小 
-            n += 1
+    n = 0
+    for i in range(0, ROWS):
+        plt.subplot(ROWS, COLS, n*2+1) # 选择子图
+        plt.imshow(ds[n])        # 画图,plt自动使用cool-->warm的颜色显示值大小 
+        n += 1
             
-    plt.figure(2)
-    n = 1
+    n = 0
     for r in range(0, ROWS):
-        for c in range(0, COLS):
-            plt.subplot(ROWS, COLS, n)
-            img = mpimg.imread(imgs[n-1])
-            plt.imshow(img)
-            n += 1
+        plt.subplot(ROWS, COLS, n*2+2)
+        img = mpimg.imread(imgs[n])
+        plt.imshow(img)
+        n += 1
 
     plt.show()
 
@@ -69,7 +66,7 @@ def load_all(n, base=1440):
 
 if __name__ == '__main__':
     ds = []
-    ds0, imgs0 = load_all(ROWS * COLS, 1474)
+    ds0, imgs0 = load_all(ROWS, 1496)
     n = 0
     for d in ds0:
         print 'op_mod for ', n
