@@ -11,10 +11,11 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+import cv2
 
 n = 0
 
-if len(sys.argv) > 0:
+if len(sys.argv) > 1:
     n  = int(sys.argv[1])
 
 d = np.load('tmp/np%d.npy' % n)
