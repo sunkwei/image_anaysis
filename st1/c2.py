@@ -52,10 +52,10 @@ def op_element(d0):
     angv = np.arctan2(yv, xv) # 计算每个点的偏角, 范围 [-pi .. pi]
     colv = np.zeros(angv.size)
 
-    LEFT = 4 # green
-    RIGHT = 3 # yellow
-    UP = 2 # red
-    DOWN = 1 # blue
+    LEFT = 4 # blue
+    RIGHT = 3 # red
+    UP = 2 # green
+    DOWN = 1 # yellow
 
     dirs = [ DOWN, LEFT, UP, RIGHT  ]
 
@@ -91,7 +91,7 @@ def show(ds, imgs, dds, fs):
         plt.imshow(img)
         n += 1
 
-    cmap2 = colors.ListedColormap(['black', 'blue', 'red', 'yellow', 'green']) # 向上 red, 向下 blue
+    cmap2 = colors.ListedColormap(['black', 'blue', 'red', 'yellow', 'green']) # 
     bounds2 = [0, 0.5, 1.5, 2.5, 3.5, 5]
     norm2 = colors.BoundaryNorm(bounds2, cmap2.N)
     n = 0
