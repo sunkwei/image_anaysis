@@ -18,7 +18,7 @@ cv2.namedWindow('origin')
 last = None
 opflow = None
 
-def draw_flow(img, flow, step=8):
+def draw_flow(img, flow, step = 16):
     ''' 在img中画光流方向 '''
     h,w = img.shape[:2]
     y,x = np.mgrid[step/2:h:step, step/2:w:step].reshape(2, -1)
@@ -31,7 +31,7 @@ def draw_flow(img, flow, step=8):
     colors = [ (255,0,0), (0,255,255), (0,0,255), (0,255,0) ]
 
     for (x1,y1),(x2,y2) in lines:
-        if np.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)) > 2: # 仅仅显示较大距离的移动
+        if np.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)) > 10: # 仅仅显示较大距离的移动
             # 根据方向决定颜色
             ang = np.arctan2(-(y2-y1), x2-x1) # y轴反方向
             ang += math.pi + math.pi/4
@@ -59,12 +59,11 @@ while True:
     last = gray
 
     if opflow is not None:
-        cv2.imshow('origin', draw_flow(img, opflow))
+        m = draw_flow(img, opflow)
+        
+        cv2.imshow('origin', cv2.resize(m, (960,540)))
 
     cv2.waitKey(1)
-
-
-
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
