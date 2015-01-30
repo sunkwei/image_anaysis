@@ -28,8 +28,10 @@ def draw_flow(img, flow, step=16):
     lines = np.int32(lines)
 
     for (x1,y1),(x2,y2) in lines:
-        cv2.line(img, (x1,y1), (x2,y2), (0,0,255), 1)
-        cv2.circle(img, (x1,y1), 1, (0, 255, 0), -1)
+        if np.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)) > 3:
+            cv2.line(img, (x1,y1), (x2,y2), (0,255,255), 1)
+            cv2.circle(img, (x1,y1), 1, (0, 255, 0), -1)
+
     return img 
 
 def get_opflow(prev, curr):
@@ -51,7 +53,7 @@ while True:
     if opflow is not None:
         cv2.imshow('origin', draw_flow(img, opflow))
 
-    cv2.waitKey(30)
+    cv2.waitKey(10)
 
 
 
