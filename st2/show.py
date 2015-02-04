@@ -10,13 +10,17 @@
 
 import cv2, time, math
 import numpy as np
+from calc import FrameSum
 
 FNAME = 'video/s.mp4'
 
 cap = cv2.VideoCapture(FNAME)
 cv2.namedWindow('origin')
+cv2.namedWindow('calc')
+
 last = None
 opflow = None
+framesum = FrameSum()
 
 def draw_flow(img, flow, step = 16):
     ''' 在img中画光流方向 '''
@@ -31,7 +35,11 @@ def draw_flow(img, flow, step = 16):
     colors = [ (255,0,0), (0,255,255), (0,0,255), (0,255,0) ]
 
     for (x1,y1),(x2,y2) in lines:
-        if np.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1)) > 10: # 仅仅显示较大距离的移动
+        length = np.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
+        if length > 10: # 光流计算错误
+            continue
+            
+        if length > 3: # 仅仅显示较大距离的移动
             # 根据方向决定颜色
             ang = np.arctan2(-(y2-y1), x2-x1) # y轴反方向
             ang += math.pi + math.pi/4
@@ -41,6 +49,12 @@ def draw_flow(img, flow, step = 16):
             cv2.circle(img, (x1,y1), 1, (0, 255, 0), -1)
 
     return img 
+
+
+def draw_length(c):
+    ''' c 为光流累加和，如何转换为方便显示的颜色呢？？？ '''
+    img = cv2.cvtColor(c, cv2.COLOR_GRAY2BGR)
+    return img
 
 def get_opflow(prev, curr):
     ''' 计算img的稠密光流'''
@@ -55,13 +69,15 @@ while True:
 
     if last is not None:
         opflow = get_opflow(last, gray)
+        framesum.append(opflow)
 
     last = gray
 
     if opflow is not None:
         m = draw_flow(img, opflow)
-        
-        cv2.imshow('origin', cv2.resize(m, (960,540)))
+        c = draw_length(framesum.get_peaks())
+        cv2.imshow('origin', m)
+        cv2.imshow('calc', c)
 
     cv2.waitKey(1)
 
