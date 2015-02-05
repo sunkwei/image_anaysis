@@ -14,7 +14,7 @@ import cv2, time, math
 
 P = 0.8 # 累计时，每帧衰减
 ROWS, COLS = 270, 480 
-THRESHOLD = 15 # 累计长度必须大于此值，才有效
+THRESHOLD = 5 # 累计长度必须大于此值，才有效
 
 
 class Frames:
@@ -52,7 +52,7 @@ class Frames:
         x = (l - low) * (255.0 / (high - low))
         g = np.uint8(x)
         retv, b = cv2.threshold(g, THRESHOLD, 255, cv2.THRESH_BINARY) # 二值化
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(7, 7))
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(9, 9))
         b = cv2.erode(b, kernel)
         
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(19, 19))
