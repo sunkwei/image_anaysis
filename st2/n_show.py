@@ -12,9 +12,9 @@
 import numpy as np
 import cv2, time, math
 
-P = 0.9 # 累计时，每帧衰减
+P = 0.8 # 累计时，每帧衰减
 ROWS, COLS = 270, 480 
-THRESHOLD = 50 # 累计长度必须大于此值，才有效
+THRESHOLD = 15 # 累计长度必须大于此值，才有效
 
 
 class Frames:
@@ -37,18 +37,10 @@ class Frames:
                 if math.sqrt(x*x + y*y) > MAX:
                     m[r][c][0], m[r][c][1] = 0, 0
 
-    def __thresh(self, lengths):
-        ''' 将 lengths 中小于 THRESHOLD 的值置为0 '''
-        lengths /= THRESHOLD
-        lengths = np.trunc(lengths)
-        lengths *= THRESHOLD
-        return lengths
-
     def length(self):
         l = self.__sums.reshape(ROWS * COLS * 2)
         x,y = l[::2], l[1::2]
         lengths = np.sqrt(x*x + y*y)
-        lengths = self.__thresh(lengths)
         return lengths.reshape((ROWS, COLS)) # 恢复图像形状
 
 
@@ -58,7 +50,19 @@ class Frames:
         l = self.length()
         low, high = np.amin(l), np.amax(l)
         x = (l - low) * (255.0 / (high - low))
-        return np.uint8(x)
+        g = np.uint8(x)
+        retv, b = cv2.threshold(g, THRESHOLD, 255, cv2.THRESH_BINARY) # 二值化
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(7, 7))
+        b = cv2.erode(b, kernel)
+        
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(19, 19))
+        b = cv2.dilate(b, kernel)
+
+        m = b.copy()
+        contours, hierarchy = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+        return b, contours, hierarchy
+            
 
 def get_opflow(prev, curr):
     ''' 计算img的稠密光流'''
@@ -69,7 +73,7 @@ def get_opflow(prev, curr):
 
 if __name__ == '__main__':
     cv2.namedWindow('gray')
-    cv2.moveWindow('gray', 0, 310)
+    cv2.moveWindow('gray', 0, 340)
     cv2.namedWindow('video')
     cv2.moveWindow('video', 0, 0)
 
@@ -77,9 +81,15 @@ if __name__ == '__main__':
 
     video = cv2.VideoCapture('video/s.mp4')
 
+    cnt = 0
     last = None
     while True:
         f, m = video.read()
+
+        cnt += 1
+        if cnt % 2 == 0: # 扔帧
+            continue
+
         g = cv2.cvtColor(m, cv2.COLOR_BGR2GRAY)
 
         if last is not None:
@@ -88,9 +98,12 @@ if __name__ == '__main__':
 
         last = g
 
-        gray = fs.gray() 
+        gray, contours, hierarchy = fs.gray() 
+        cv2.drawContours(m, contours, -1, (0, 0, 255))
+
         cv2.imshow('gray', gray)
         cv2.imshow('video', m)
+
         key = cv2.waitKey(1)
         if key == 113: # 'q'
             break
