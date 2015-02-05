@@ -10,11 +10,11 @@
 
 
 import numpy as np
-import cv2, time, math
+import cv2, time, math, sys
 
 P = 0.8 # 累计时，每帧衰减
-ROWS, COLS = 270, 480 
-THRESHOLD = 5 # 累计长度必须大于此值，才有效
+ROWS, COLS = 270, 480
+THRESHOLD = 8 # 累计长度必须大于此值，才有效
 
 
 class Frames:
@@ -45,7 +45,7 @@ class Frames:
 
 
     def gray(self):
-        ''' 返回长度的灰度图，[0 .. 255]
+        ''' 返回长度的二值图，形状
         '''
         l = self.length()
         low, high = np.amin(l), np.amax(l)
@@ -71,20 +71,43 @@ def get_opflow(prev, curr):
     return flow
 
 
-if __name__ == '__main__':
-    cv2.namedWindow('gray')
-    cv2.moveWindow('gray', 0, 340)
-    cv2.namedWindow('video')
-    cv2.moveWindow('video', 0, 0)
+def save_opflow(n, flow):
+    fname = 'saved/%04d.npy' % n
+    print fname, 'saved'
+    np.save(fname, flow)
 
-    fs = Frames()
+def load_opflow(n):
+    fname = 'saved/%04d.npy' % n
+    return np.load(fname)
+        
+
+if __name__ == '__main__':
+    save = False
+
+    if len(sys.argv) > 1 and sys.argv[1] == 'save':
+        save = True
 
     video = cv2.VideoCapture('video/s.mp4')
 
+    if not save:
+        cv2.namedWindow('gray')
+        cv2.moveWindow('gray', 0, 340)
+        cv2.namedWindow('video')
+        cv2.moveWindow('video', 0, 0)
+
+    fs = Frames()
+
+    #src = np.array([[0, 80], [150, 269], [479, 150], [230, 40]], np.float32)
+    #dst = np.array([[0, 0], [100, 269],[400, 269],  [479, 0]], np.float32)
+    #mt = cv2.getPerspectiveTransform(src, dst)
+    #print mt
+    
     cnt = 0
     last = None
     while True:
         f, m = video.read()
+        m = cv2.resize(m, (COLS, ROWS))
+        #m = cv2.warpPerspective(m, mt, (COLS, ROWS))
 
         cnt += 1
         if cnt % 2 == 0: # 扔帧
@@ -92,19 +115,33 @@ if __name__ == '__main__':
 
         g = cv2.cvtColor(m, cv2.COLOR_BGR2GRAY)
 
+        n = int(cnt/2)
         if last is not None:
-            flow = get_opflow(last, g)
-            fs.append(flow)
+            if save:
+                flow = get_opflow(last, g)
+                save_opflow(n, flow)
+            else:
+                flow = load_opflow(n)
+                fs.append(flow)
 
         last = g
 
+        if save:
+            continue
+
         gray, contours, hierarchy = fs.gray() 
+        
+#        for contour in contours:
+#            r = cv2.boundingRect(contour)
+#            tl = (r[0], r[1])
+#            br = (r[0]+r[2], r[1]+r[3])
+#            cv2.rectangle(m, tl, br, (0, 0, 255))
         cv2.drawContours(m, contours, -1, (0, 0, 255))
 
         cv2.imshow('gray', gray)
         cv2.imshow('video', m)
 
-        key = cv2.waitKey(1)
+        key = cv2.waitKey(30)
         if key == 113: # 'q'
             break
 
