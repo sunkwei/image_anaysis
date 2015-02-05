@@ -10,20 +10,11 @@
 
 
 import numpy as np
-import cv2, time
+import cv2, time, math
 
-P = 0.8 # 累计时，每帧衰减
-N = 10 # 缓冲中10帧
+P = 0.9 # 累计时，每帧衰减
 ROWS, COLS = 270, 480 
-
-def load(n):
-    fname = 'saved/%03d.npy' % n
-    m = np.load(fname)
-    return m
-
-def save_length(n, l):
-    fname = 'length/%03d.npy' % n
-    np.save(fname, l)
+THRESHOLD = 5 # 累计长度必须大于此值，才有效
 
 
 class Frames:
@@ -31,14 +22,33 @@ class Frames:
         self.__sums = np.zeros((ROWS, COLS, 2))
 
     def append(self, m):
+        #self.__filter(m)
         self.__sums = self.__sums * P
         self.__sums = self.__sums + m
 
+    def __filter(self, m):
+        ''' 删除 m 中变化巨大的值，有可能是光流错误值 '''
+        MAX = 10
+        it = np.nditer(m)
+
+        for r in range(0, ROWS):
+            for c in range(0, COLS):
+                x,y = it.next(), it.next() # 取一个点的x,y方向分量
+                if math.sqrt(x*x + y*y) > MAX:
+                    m[r][c][0], m[r][c][1] = 0, 0
+
+    def __thresh(self, lengths):
+        ''' 将 lengths 中小于 THRESHOLD 的值置为0 '''
+        lengths /= THRESHOLD
+        lengths = np.trunc(lengths)
+        lengths *= THRESHOLD
+        return lengths
 
     def length(self):
         l = self.__sums.reshape(ROWS * COLS * 2)
         x,y = l[::2], l[1::2]
         lengths = np.sqrt(x*x + y*y)
+        lengths = self.__thresh(lengths)
         return lengths.reshape((ROWS, COLS)) # 恢复图像形状
 
 
@@ -59,6 +69,10 @@ def get_opflow(prev, curr):
 
 if __name__ == '__main__':
     cv2.namedWindow('gray')
+    cv2.moveWindow('gray', 0, 310)
+    cv2.namedWindow('video')
+    cv2.moveWindow('video', 0, 0)
+
     fs = Frames()
 
     video = cv2.VideoCapture('video/s.mp4')
@@ -76,9 +90,10 @@ if __name__ == '__main__':
 
         gray = fs.gray() 
         cv2.imshow('gray', gray)
-        c = cv2.waitKey(10)
-        if c == 'q':
-            break;
+        cv2.imshow('video', m)
+        key = cv2.waitKey(1)
+        if key == 113: # 'q'
+            break
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
