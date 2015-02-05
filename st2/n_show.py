@@ -14,7 +14,7 @@ import cv2, time, math
 
 P = 0.9 # 累计时，每帧衰减
 ROWS, COLS = 270, 480 
-THRESHOLD = 5 # 累计长度必须大于此值，才有效
+THRESHOLD = 50 # 累计长度必须大于此值，才有效
 
 
 class Frames:
