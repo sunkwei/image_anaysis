@@ -10,11 +10,11 @@
 
 
 import numpy as np
-import cv2, time
+import cv2, time, math
 
-P = 0.8 # 累计时，每帧衰减
-N = 10 # 缓冲中10帧
+P = 1.0 # 累计时，每帧衰减
 ROWS, COLS = 270, 480 
+THRESHOLD = 5.0 # 累计长度小于此，则置零
 
 def load(n):
     fname = 'saved/%03d.npy' % n
@@ -31,8 +31,20 @@ class Frames:
         self.__sums = np.zeros((ROWS, COLS, 2))
 
     def append(self, m):
+        # self.__chk(m)
         self.__sums = self.__sums * P
         self.__sums = self.__sums + m
+
+    def __chk(self, m):
+        ''' 如果 m 的 sqrt(x*x + y*y) > MAX 则认为是光流探测错误，改为 0
+        '''
+        it = np.nditer(m)
+        for r in range(0, ROWS):
+            for c in range(0, COLS):
+                x,y = it.next(), it.next()
+                if x*x + y*y > 10:
+                    m[r][c][0] = 0
+                    m[r][c][1] = 0
 
 
     def length(self):
@@ -41,14 +53,17 @@ class Frames:
         lengths = np.sqrt(x*x + y*y)
         return lengths.reshape((ROWS, COLS)) # 恢复图像形状
 
-
     def gray(self):
         ''' 返回长度的灰度图，[0 .. 255]
         '''
         l = self.length()
+        r = l / THRESHOLD
+        l = np.trunc(r)
+        l = l * THRESHOLD
         low, high = np.amin(l), np.amax(l)
         x = (l - low) * (255.0 / (high - low))
         return np.uint8(x)
+
 
 def get_opflow(prev, curr):
     ''' 计算img的稠密光流'''
@@ -75,7 +90,12 @@ if __name__ == '__main__':
         last = g
 
         gray = fs.gray() 
+
+#        cv2.erode(gray, gray)
+#        cv2.dilate(gray, gray)
+
         cv2.imshow('gray', gray)
+
         c = cv2.waitKey(10)
         if c == 'q':
             break;
