@@ -10,20 +10,11 @@
 
 
 import numpy as np
-import cv2, time, math
+import cv2, time, math, sys
 
-P = 1.0 # 累计时，每帧衰减
-ROWS, COLS = 270, 480 
-THRESHOLD = 5.0 # 累计长度小于此，则置零
-
-def load(n):
-    fname = 'saved/%03d.npy' % n
-    m = np.load(fname)
-    return m
-
-def save_length(n, l):
-    fname = 'length/%03d.npy' % n
-    np.save(fname, l)
+P = 0.8 # 累计时，每帧衰减
+ROWS, COLS = 270, 480
+THRESHOLD = 8 # 累计长度必须大于此值，才有效
 
 
 class Frames:
@@ -31,21 +22,20 @@ class Frames:
         self.__sums = np.zeros((ROWS, COLS, 2))
 
     def append(self, m):
-        # self.__chk(m)
+        #self.__filter(m)
         self.__sums = self.__sums * P
         self.__sums = self.__sums + m
 
-    def __chk(self, m):
-        ''' 如果 m 的 sqrt(x*x + y*y) > MAX 则认为是光流探测错误，改为 0
-        '''
+    def __filter(self, m):
+        ''' 删除 m 中变化巨大的值，有可能是光流错误值 '''
+        MAX = 10
         it = np.nditer(m)
+
         for r in range(0, ROWS):
             for c in range(0, COLS):
-                x,y = it.next(), it.next()
-                if x*x + y*y > 10:
-                    m[r][c][0] = 0
-                    m[r][c][1] = 0
-
+                x,y = it.next(), it.next() # 取一个点的x,y方向分量
+                if math.sqrt(x*x + y*y) > MAX:
+                    m[r][c][0], m[r][c][1] = 0, 0
 
     def length(self):
         l = self.__sums.reshape(ROWS * COLS * 2)
@@ -54,7 +44,7 @@ class Frames:
         return lengths.reshape((ROWS, COLS)) # 恢复图像形状
 
     def gray(self):
-        ''' 返回长度的灰度图，[0 .. 255]
+        ''' 返回长度的二值图，形状
         '''
         l = self.length()
         r = l / THRESHOLD
@@ -62,7 +52,19 @@ class Frames:
         l = l * THRESHOLD
         low, high = np.amin(l), np.amax(l)
         x = (l - low) * (255.0 / (high - low))
-        return np.uint8(x)
+        g = np.uint8(x)
+        retv, b = cv2.threshold(g, THRESHOLD, 255, cv2.THRESH_BINARY) # 二值化
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(9, 9))
+        b = cv2.erode(b, kernel)
+        
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(19, 19))
+        b = cv2.dilate(b, kernel)
+
+        m = b.copy()
+        contours, hierarchy = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+        return b, contours, hierarchy
+            
 
 
 def get_opflow(prev, curr):
@@ -72,33 +74,79 @@ def get_opflow(prev, curr):
     return flow
 
 
+def save_opflow(n, flow):
+    fname = 'saved/%04d.npy' % n
+    print fname, 'saved'
+    np.save(fname, flow)
+
+def load_opflow(n):
+    fname = 'saved/%04d.npy' % n
+    return np.load(fname)
+        
+
 if __name__ == '__main__':
-    cv2.namedWindow('gray')
-    fs = Frames()
+    save = False
+
+    if len(sys.argv) > 1 and sys.argv[1] == 'save':
+        save = True
 
     video = cv2.VideoCapture('video/s.mp4')
 
+    if not save:
+        cv2.namedWindow('gray')
+        cv2.moveWindow('gray', 0, 340)
+        cv2.namedWindow('video')
+        cv2.moveWindow('video', 0, 0)
+
+    fs = Frames()
+
+    #src = np.array([[0, 80], [150, 269], [479, 150], [230, 40]], np.float32)
+    #dst = np.array([[0, 0], [100, 269],[400, 269],  [479, 0]], np.float32)
+    #mt = cv2.getPerspectiveTransform(src, dst)
+    #print mt
+    
+    cnt = 0
     last = None
     while True:
         f, m = video.read()
+        m = cv2.resize(m, (COLS, ROWS))
+        #m = cv2.warpPerspective(m, mt, (COLS, ROWS))
+
+        cnt += 1
+        if cnt % 2 == 0: # 扔帧
+            continue
+
         g = cv2.cvtColor(m, cv2.COLOR_BGR2GRAY)
 
+        n = int(cnt/2)
         if last is not None:
-            flow = get_opflow(last, g)
-            fs.append(flow)
+            if save:
+                flow = get_opflow(last, g)
+                save_opflow(n, flow)
+            else:
+                flow = load_opflow(n)
+                fs.append(flow)
 
         last = g
 
-        gray = fs.gray() 
+        if save:
+            continue
 
-#        cv2.erode(gray, gray)
-#        cv2.dilate(gray, gray)
+        gray, contours, hierarchy = fs.gray() 
+        
+#        for contour in contours:
+#            r = cv2.boundingRect(contour)
+#            tl = (r[0], r[1])
+#            br = (r[0]+r[2], r[1]+r[3])
+#            cv2.rectangle(m, tl, br, (0, 0, 255))
+        cv2.drawContours(m, contours, -1, (0, 0, 255))
 
         cv2.imshow('gray', gray)
+        cv2.imshow('video', m)
 
-        c = cv2.waitKey(10)
-        if c == 'q':
-            break;
+        key = cv2.waitKey(30)
+        if key == 113: # 'q'
+            break
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
