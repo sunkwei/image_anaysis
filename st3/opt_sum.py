@@ -15,13 +15,16 @@ import collections as cl
 
 #SOURCE = 0
 SOURCE = 'student.mp4'
-#SOURCE = 'rtsp://172.16.1.56/av0_0?tcp=1'
+#SOURCE = 'rtsp://172.16.1.56/av0_1'
 #SOURCE = 'c:/Users/sunkw/work/1.mp4'
+
+WIDTH = 480
+HEIGHT = 270
 
 
 def get_opflow(prev, curr):
     ''' 计算img的稠密光流'''
-    flow = cv.calcOpticalFlowFarneback(prev, curr, 0.5, 1, 3, 15, 3, 5, 1)
+    flow = cv.calcOpticalFlowFarneback(prev, curr, 0.5, 1, 3, 15, 3, 7, 1, 0)
     return flow
 
 
@@ -46,7 +49,7 @@ prev = None
 flow = None
 quit = False
 
-discard = 5
+discard = 2
 cnt = 0
 
 while not quit:
@@ -59,7 +62,7 @@ while not quit:
     if cnt % discard == 0:
         continue
 
-    img = cv.resize(img, (480, 270))
+    img = cv.resize(img, (WIDTH, HEIGHT))
     curr = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
     if prev is None:
@@ -74,7 +77,6 @@ while not quit:
         if len(qu) < 10:
             continue
         else:
-            pass
             flow_sum = np.zeros_like(flow)
             for q in qu:
                 flow_sum += q
@@ -82,7 +84,6 @@ while not quit:
             flow = flow_sum
 
     prev = curr
-
 
 
     if flow is not None:
@@ -100,15 +101,10 @@ while not quit:
         hsv[..., 0] = a
 
         
-#        b = mask_threshold(mag)
-#        sys.exit()
         N = 10 # 光流距离阈值
         b = cv.threshold(mag, N, 255, cv.THRESH_BINARY)
         hsv[..., 2] = b[1]
 
-
-#        c = cv.normalize(mag, None, 0, 255, cv.NORM_MINMAX)
-#        hsv[..., 2] = c
 
         rgb = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)
         
@@ -117,6 +113,15 @@ while not quit:
 #        cv.dilate(gray, gray, iterations=5)
         
     
+        r, c = 0, 0
+        rs, cs = HEIGHT / 8, WIDTH / 8
+        for i in range(0, 8):
+            cv.line(rgb, (0, r), (WIDTH, r), (255, 255, 255), 1)
+            r += rs
+        for i in range(0, 8):
+            cv.line(rgb, (c, 0), (c, HEIGHT), (255, 255, 255), 1)
+            c += cs
+
         cv.imshow('flow', rgb)
         cv.imshow('origin', img)
 
