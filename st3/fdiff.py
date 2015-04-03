@@ -23,15 +23,27 @@ class FrameDiff:
         self.__prev = curr.copy()
         return d
 
-    def bindingrects(self, diff, image):
+    def bounding_rects(self, diff, image):
         ''' 根据diff，在 image 中画出变化矩形 '''
         tmp = diff.copy()
-        r, tmp = cv.threshold(tmp, 20, 255, cv.THRESH_BINARY)
+
         ker = cv.getStructuringElement(cv.MORPH_RECT, (5, 5))
         tmp = cv.erode(tmp, ker)
-        ker = cv.getStructuringElement(cv.MORPH_RECT, (25, 25))
-        tmp = cv.dilate(tmp, ker)
-        return tmp
+        ker = cv.getStructuringElement(cv.MORPH_RECT, (51, 51))
+        tmp = cv.dilate(tmp, ker, 5)
+        r, tmp = cv.threshold(tmp, 20, 255, cv.THRESH_BINARY)
+
+        mask = np.zeros_like(image) # 用于轮廓内包含掩码
+
+        contours, h = cv.findContours(tmp, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+        rcs = []
+        for ct in contours:
+            rect = cv.boundingRect(ct)
+            rcs.append(rect)
+
+        cv.drawContours(mask, contours, -1, (255, 255, 255), -1) # 生成掩码
+
+        return rcs, mask
 
 
 
